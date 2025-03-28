@@ -3,20 +3,21 @@ import streamlit as st
 import pdfkit
 import requests
 from jinja2 import Template
-from langchain_openai import ChatOpenAI  
+from langchain_groq import ChatGroq  # Assuming Groq is available in langchain
 from langchain.schema import HumanMessage
 from langchain_chroma import Chroma
 from langchain_community.embeddings import OpenAIEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+import chromadb.api
 
-# Initialize components
-llm = ChatOpenAI(model_name="gpt-4", temperature=0.7)
+chromadb.api.client.SharedSystemClient.clear_system_cache()
+
+llm = ChatGroq(api_key=os.getenv('GROQ_API_KEY'), model="llama-3.1-8b-instant", temperature=0.5)
 embeddings = OpenAIEmbeddings()
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=100)
 
 # Configure API keys (Set these in Streamlit secrets)
 SERPER_API_KEY = "80487a458a3aad92da184975fffdddafe9f6a325"
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 def google_search(query):
     """Perform Google search using Serper API"""
@@ -155,11 +156,8 @@ def main():
             with st.spinner("🔍 Conducting research..."):
                 research_agent(topic)
                 report_content = generate_report()
-                create_pdf(report_content)
                 
             st.success("✅ Research complete!")
-            with open("research_report.pdf", "rb") as f:
-                st.download_button("Download Report", f, file_name="research_report.pdf")
             
             st.markdown("### Research Preview")
             st.markdown(report_content, unsafe_allow_html=True)
