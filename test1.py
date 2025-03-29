@@ -15,8 +15,6 @@ chromadb.api.client.SharedSystemClient.clear_system_cache()
 llm = ChatGroq(api_key=os.getenv('GROQ_API_KEY'), model="llama-3.1-8b-instant", temperature=0.5)
 embeddings = OpenAIEmbeddings()
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=100)
-
-# Configure API keys (Set these in Streamlit secrets)
 SERPER_API_KEY = "80487a458a3aad92da184975fffdddafe9f6a325"
 
 def google_search(query):
@@ -51,7 +49,7 @@ def research_agent(topic):
     st.session_state.research_data = {"topic": topic, "questions": [], "sources": []}
 
     # Researcher Agent
-    for q in questions[:5]:  # Limit to only the first 5 questions
+    for q in questions[:5]:
         if not q.strip():
             continue
             
