@@ -8,6 +8,7 @@ from langchain.schema import HumanMessage
 from langchain_chroma import Chroma
 from langchain_community.embeddings import OpenAIEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+from fpdf import FPDF
 import chromadb.api
 
 chromadb.api.client.SharedSystemClient.clear_system_cache()
@@ -120,33 +121,39 @@ def generate_report():
     )
 
 def create_pdf(content):
-    """Generate PDF with improved formatting"""
-    template = Template("""
-    <html>
-        <head>
-            <style>
-                body { font-family: Arial, sans-serif; line-height: 1.6; margin: 2cm; }
-                h1 { color: #2c3e50; border-bottom: 2px solid #2c3e50; }
-                h2 { color: #34495e; }
-                h3 { color: #7f8c8d; }
-                a { color: #3498db; text-decoration: none; }
-            </style>
-        </head>
-        <body>
-            {{ content|safe }}
-        </body>
-    </html>
-    """)
+    """Generate PDF without using pdfkit and save to system"""
+
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.set_font("Arial", size=12)
+
+    for line in content.splitlines():
+        pdf.multi_cell(0, 10, line)
+
+    # Check if the file exists and delete it first
+    if os.path.exists("research_report.pdf"):
+        os.remove("research_report.pdf")
     
-    html_content = template.render(content=content)
-    st.markdown("### HTML Preview")
-    st.markdown(html_content, unsafe_allow_html=True)
-    # pdfkit.from_string(html_content, "research_report.pdf")
+    pdf.output("research_report.pdf")
+
+    st.success("PDF saved as 'research_report.pdf' in the current directory.")
 
 def main():
     st.title("🤖 AI Research Agent")
-    st.markdown("Enter a topic to generate comprehensive research report")
+    st.markdown("💡 Enter a topic to generate a comprehensive research report.")
+    st.markdown("""
+    ### 🛠️ How to Use:
+    1. **📝 Enter a Research Topic**: Provide a clear and concise topic in the input box.
+    2. **🚀 Start Research**: Click the "Start Research" button to begin the process.
+    3. **👀 View Results**: Once the research is complete, preview the generated report.
+    4. **📥 Download Report**: Download the report as a PDF for offline use.
     
+    **⚠️ Note**: The AI will:
+    - Break down the topic into sub-questions.
+    - Search for relevant information.
+    - Compile a structured report with references.
+    """)
     topic = st.text_input("Research Topic:", placeholder="Climate change impacts on biodiversity...")
     
     if st.button("Start Research"):
@@ -157,8 +164,19 @@ def main():
                 
             st.success("✅ Research complete!")
             
+            create_pdf(report_content)
+            
+            with open("research_report.pdf", "rb") as pdf_file:
+                st.download_button(
+                    label="📄 Download PDF",
+                    data=pdf_file,
+                    file_name="research_report.pdf",
+                    mime="application/pdf"
+                )
+                
             st.markdown("### Research Preview")
             st.markdown(report_content, unsafe_allow_html=True)
+                        
         else:
             st.warning("Please enter a research topic")
 
